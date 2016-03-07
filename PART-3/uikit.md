@@ -109,11 +109,71 @@ center - 改变view的位置但是不改变大小
 ```
 
 ```
+旋转中心:
+anchor,锚点, 默认是0.5 0.5
+```
+
+```
 UIViewContentMode:
 ScaleToFill - 拉伸铺满填充(等价于bgsize:100%)
 ScaleAspectFit - 等比缩放至有一边能充满区域(等价于bgsize:contain)
 ScaleAspectFill - 等比缩放至填满区域(等价于bgsize:cover)
 Redraw - 改变`bounds`的时候调用`setNeedsDisplay`
+```
+
+在一个UIView对象中有以下的动画化属性：
+
+```
+frame - 你可以使用这个来动画的改变视图的尺寸和位置
+bounds - 使用这个可以动画的改变视图的尺寸
+center － 使用这个可以动画的改变视图的位置
+transform － 使用这个可以翻转或者放缩视图
+alpha － 使用这个可以改变视图的透明度
+backgroundColor － 使用这个可以改变视图的背景颜色
+contentStretch - 使用这个可以改变视图内容如何拉伸
+```
+
+常用的方法:
+
+```
+addSubview(_ view: UIView)
+添加一个子视图到接收者并让它在最上面显示出来。 
+bringSubviewToFront(_ view: UIView)
+把指定的子视图移动到顶层
+sendSubviewToBack(_ view: UIView)
+把指定的子视图移动到最底层
+removeFromSuperview()
+把视图从父视图中移除
+insertSubview(_ view: UIView, atIndex index: Int)
+在指定的视图层级索引位置插入一个视图
+insertSubview(_ view: UIView, aboveSubview siblingSubview: UIView)
+在另外一个视图上面插入一个视图
+insertSubview(_ view: UIView, belowSubview siblingSubview: UIView)
+在另外一个视图下面插入一个视图
+exchangeSubviewAtIndex(_ index1: Int, withSubviewAtIndex index2: Int)
+交换两个视图层级索引的位置所对应的视图
+
+convertPoint(_ point: CGPoint, toView view: UIView?) -> CGPoint
+转换一个点从接收者坐标系到给定的视图坐标系 
+convertPoint(_ point: CGPoint, fromView view: UIView?) -> CGPoint
+把一个点从一个坐标系转换到接收者的坐标系 
+convertRect(_ rect: CGRect, toView view: UIView?) -> CGRect
+转换接收者坐标系中的矩形到其他视图
+convertRect(_ rect: CGRect, fromView view: UIView?) -> CGRect
+转换一个矩形从其他视图坐标系到接收者坐标系。
+
+didAddSubview(_ subview: UIView)
+告诉视图当子视图已经添加
+isDescendantOfView(_ view: UIView) -> Bool
+返回一个布尔值指出接收者是否是给定视图的子视图或者指向那个视图
+```
+
+可以单独设置手势的单独识别和同时识别
+
+疑问:实现头像圆角:
+
+```
+
 ```
 
 ## UILabel
@@ -258,6 +318,32 @@ UILineBreakModeMiddleTruncation,
 以单词为单位换行。无论是单行还是多行，都是中间有省略号，省略号后面只有2个字符。
 ```
 
+富文本可以配置的项:
+
+```
+// NSFontAttributeName 设置字体属性，默认值：字体：Helvetica(Neue) 字号：12 
+// NSForegroundColorAttributeNam 设置字体颜色，取值为 UIColor对象，默认值为黑色 
+// NSBackgroundColorAttributeName 设置字体所在区域背景颜色，取值为 UIColor对象，默认值为nil, 透明色
+// NSLigatureAttributeName 设置连体属性，取值为NSNumber 对象(整数)，0 表示没有连体字符，1 表示使用默认的连体字符 
+// NSKernAttributeName 设定字符间距，取值为 NSNumber 对象（整数），正值间距加宽，负值间距变窄 
+// NSStrikethroughStyleAttributeName 设置删除线，取值为 NSNumber 对象（整数） 
+// NSStrikethroughColorAttributeName 设置删除线颜色，取值为 UIColor 对象，默认值为黑色 
+// NSUnderlineStyleAttributeName 设置下划线，取值为 NSNumber 对象（整数），枚举常量 NSUnderlineStyle中的值，与删除线类似 
+// NSUnderlineColorAttributeName 设置下划线颜色，取值为 UIColor 对象，默认值为黑色 
+// NSStrokeWidthAttributeName 设置笔画宽度，取值为 NSNumber 对象（整数），负值填充效果，正值中空效果 
+// NSStrokeColorAttributeName 填充部分颜色，不是字体颜色，取值为 UIColor 对象 
+// NSShadowAttributeName 设置阴影属性，取值为 NSShadow 对象 
+// NSTextEffectAttributeName 设置文本特殊效果，取值为 NSString 对象，目前只有图版印刷效果可用： 
+// NSBaselineOffsetAttributeName 设置基线偏移值，取值为 NSNumber （float）,正值上偏，负值下偏 
+// NSObliquenessAttributeName 设置字形倾斜度，取值为 NSNumber （float）,正值右倾，负值左倾 
+// NSExpansionAttributeName 设置文本横向拉伸属性，取值为 NSNumber （float）,正值横向拉伸文本，负值横向压缩文本 
+// NSWritingDirectionAttributeName 设置文字书写方向，从左向右书写或者从右向左书写 
+// NSVerticalGlyphFormAttributeName 设置文字排版方向，取值为 NSNumber 对象(整数)，0 表示横排文本，1 表示竖排文本 
+// NSLinkAttributeName 设置链接属性，点击后调用浏览器打开指定URL地址 
+// NSAttachmentAttributeName 设置文本附件,取值为NSTextAttachment对象,常用于文字图片混排 
+// NSParagraphStyleAttributeName 设置文本段落排版格式，取值为 NSParagraphStyle 对象　
+```
+
 ## UIButton
 
 继承 UIControl , 用于实现拦截用户点击屏幕按钮的事件.
@@ -285,6 +371,14 @@ TouchDragExit：触摸从控件内部拖动到外部时
 TouchUpInside：在控件之内触摸并抬起事件
 TouchUpOutside：在控件之外触摸抬起事件
 TouchCancel：触摸取消事件，即一次触摸因为放上太多手指而被取消，或者电话打断
+```
+
+```
+初始化
+UIColor 是一个类
+CGColor 是一个结构体
+C++可以调用CG相关的
+如果需要特定类型的button需要在初始化的时候指定,因为在后面不能直接改buttonType
 ```
 
 ## UIImage
