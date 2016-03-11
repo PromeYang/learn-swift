@@ -291,6 +291,16 @@ UILabel 实现了一个只读的文本view, 可以用于单行或者多行文本
         self.view.addSubview(label4)
 ```
 
+action:需要传入事件
+
+```
+func click(sender:AnyObject){
+        var tap:UITapGestureRecognizer = sender as! UITapGestureRecognizer
+        label3.text="label1被点击了"
+        NSLog("this is click")
+    }
+```
+
 默认的内容风格是 `UIViewContentModeRedraw`, 默认忽略用户事件,裁剪子视图, 要监听事件需要在初始化之后设置`userInteractionEnabled`为`true`, 要允许超出区域可视要设置`clipsToBounds`为`false`, 设置多行文本`numberOfLines`
 
 有一些属性是不能通过属性检查器, 必须用代码的方式去设置.
@@ -344,7 +354,381 @@ UILineBreakModeMiddleTruncation,
 // NSParagraphStyleAttributeName 设置文本段落排版格式，取值为 NSParagraphStyle 对象　
 ```
 
-## UIButton
+## UITextView
+
+UIResponder , UIView , UIScrollView(和我猜想的一样, 能滚动的东西一定继承了UIScrollView , 应该梳理出基本功能的几个类, 其他具体类的实现都是继承这些基础类的)
+
+用来实现一个多行的并且可以滚动的文本区域.还可以被编辑.ios6开始支持富文本(attributedText).
+
+当你点击一个可以编辑的UITextView时, 这个UITextView会成为第一响应者并调起一个关联的键盘.隐藏键盘需要发送`resignFirstResponder`通知给到当前响应的UITextView并结束编辑状态.
+
+如果要自定义键盘的外观和行为, 需要实现`UITextInputTraits`协议, 设置如(ASCII, Numbers, URL, Email, and others) 样式, 或者是否需要大小写等等.
+
+当唤起键盘的时候会发送通知事件:
+
+```
+UIKeyboardWillShowNotification
+UIKeyboardDidShowNotification
+UIKeyboardWillHideNotification
+UIKeyboardDidHideNotification
+```
+
+只有监听这些事件才可以获取键盘相关的信息, 如大小, 可以用来作为改变视图的计算依据.
+
+与UILabelView的不同:
+
+```
+属性不同:
+editable, 是否允许编辑,默认为true
+allowsEditingTextAttributes, 是否允许用户编辑文本样式, 默认false
+dataDetectorTypes: UIDataDetectorTypes, 用来声明文本中一些特殊字符的处理方式(如数字, 链接, 邮箱等等)
+
+textview.dataDetectorTypes = UIDataDetectorTypes.None //都不加链接
+textview.dataDetectorTypes = UIDataDetectorTypes.PhoneNumber //只有电话加链接
+textview.dataDetectorTypes = UIDataDetectorTypes.Link //只有网址加链接
+textview.dataDetectorTypes = UIDataDetectorTypes.All //电话和网址都加
+
+typingAttributes: [String : AnyObject], 用来设置用户新输入的富文本样式
+linkTextAttributes: [String : AnyObject]!, 用来设置链接的外观, 默认是蓝色字体和下划线
+textContainerInset: UIEdgeInsets, 用来设置显示内容的padding
+用法:textView.textContainerInset = UIEdgeInsetsMake(0, 10, 0, 10);
+效果是右侧的滚动条距离内容10像素
+selectedRange: NSRange, 设置点击编辑的时候光标位置
+clearsOnInsertion, 设置是否
+selectable, 设置是否允许选择
+inputView: UIView?, 默认为nil,即系统标准键盘
+inputAccessoryView: UIView?, 默认为nil, 在键盘视图上方设置自定义的视图,例如实现微信聊天输入法的工具条
+
+常用方法:
+scrollRangeToVisible(_ range: NSRange), 设置要滚动到展示的文本,可以用来设置输入时跳到最后一行
+becomeFirstResponder, 设置成为第一响应者, 就跟默认focus一样.
+resignFirstResponder, 隐藏键盘
+
+事件通知:
+UITextViewTextDidBeginEditingNotification
+UITextViewTextDidChangeNotification
+UITextViewTextDidEndEditingNotification
+
+关于换行:
+从XML或者json中读取出来的"\n"，系统认为是字符串，会默认转换为"\\n"，所以当显示的时候就是字符串了，要想显示换行，需要自己手动将"\\n"转换为"\n"，这样才能换行.
+```
+
+简单用法:
+
+```
+class ViewController: UIViewController, UITextViewDelegate {
+    
+    private var mycontext = 0
+    let t2 = UITextView()
+    let placeholderLabel = UILabel()
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        // Do any additional setup after loading the view, typically from a nib.
+        let text = UITextView(frame: CGRectMake(50.0, 20.0, 200.0, 200.0), textContainer: nil)
+        text.text = "这是一\n个UITextView, 后面020-12345678还有很多很多很多很多很多很多很多很多很多很多很多很多很多很多很多很多很多很多"
+        text.textColor = UIColor.whiteColor()
+        text.textAlignment = NSTextAlignment.Center
+        text.font = UIFont(name:"Heiti TC", size:20)
+        text.frame = CGRectMake(50.0, 20.0, 200.0, 200.0)
+        text.backgroundColor = UIColor.blueColor()
+        // 设置输入的时候是否清楚之前的内容
+        text.clearsOnInsertion = true
+        // 设置是否允许选择
+        text.selectable = true
+        // 设置成为第一响应者
+        text.becomeFirstResponder()
+        // 设置选中的区域
+        text.selectedRange = NSRange(location: 0,length: 0)
+        // 设置滚动到需要展示文本的地方
+        text.scrollRangeToVisible(NSRange(location: text.text.characters.count ,length: 1))
+        // 设置滚动不要每次都重头开始
+        text.layoutManager.allowsNonContiguousLayout = false
+        
+        // 设置链接的处理方式
+        // 需要设置不允许编辑
+        text.dataDetectorTypes = UIDataDetectorTypes.None //都不加链接
+        text.dataDetectorTypes = UIDataDetectorTypes.PhoneNumber //只有电话加链接
+        text.dataDetectorTypes = UIDataDetectorTypes.Link //只有网址加链接
+        text.dataDetectorTypes = UIDataDetectorTypes.CalendarEvent //只有日历
+        text.dataDetectorTypes = UIDataDetectorTypes.All //电话和网址都加
+        
+        // 设置选择菜单
+        let mail = UIMenuItem(title: "邮件", action: "onMail")
+        let weixin = UIMenuItem(title: "微信", action: "onWeiXin")
+        let menu = UIMenuController()
+        menu.menuItems = [mail,weixin]
+        
+        // 字符串替换换行符
+        var aText = "asdada\nasdasdads"
+        aText = aText.stringByReplacingOccurrencesOfString("\\n", withString: "\n")
+        
+        // 注册事件通知
+        NSNotificationCenter.defaultCenter().addObserver(self, selector: "onUITextViewTextDidBeginEditing:", name: UITextViewTextDidBeginEditingNotification, object: nil);
+        NSNotificationCenter.defaultCenter().addObserver(self, selector: "onUITextViewTextDidChange:", name: UITextViewTextDidChangeNotification, object: nil);
+        NSNotificationCenter.defaultCenter().addObserver(self, selector: "onUITextViewTextDidEndEditing:", name: UITextViewTextDidEndEditingNotification, object: nil);
+        
+        // 实现垂直居中的文本显示
+        t2.text = "这是一个demo"
+        t2.text = ""
+        t2.textColor = UIColor.blackColor()
+        t2.textAlignment = NSTextAlignment.Center
+        t2.font = UIFont(name:"Heiti TC", size:20)
+        t2.frame = CGRectMake(50.0, 220.0, 200.0, 100.0)
+        t2.backgroundColor = UIColor.purpleColor()
+        // 实现 UITextViewDelegate 协议
+        t2.delegate = self
+        // KVO实现监听内容大小的变化
+        t2.addObserver(self, forKeyPath: "contentSize", options: .New, context: &mycontext)
+        
+        // 实现placeholder
+        placeholderLabel.frame = t2.frame
+        placeholderLabel.text = "这是一个placeholderLabel"
+        placeholderLabel.textAlignment = NSTextAlignment.Center
+        placeholderLabel.lineBreakMode = NSLineBreakMode.ByCharWrapping
+        placeholderLabel.alpha = 0.0
+
+        self.view.addSubview(text);
+        self.view.addSubview(t2);
+        self.view.addSubview(placeholderLabel);
+
+    }
+    
+    override func viewDidLayoutSubviews(){
+        if(t2.text.characters.count <= 0){
+            placeholderLabel.alpha = 1.0
+        }
+    }
+    
+    // 实现了UITextViewDelegate协议的时候, 事件处理block
+    func textViewDidBeginEditing(textView: UITextView){
+        print(111)
+    }
+    func textViewDidChange(textView: UITextView){
+        if(t2.text.characters.count <= 0){
+            placeholderLabel.alpha = 1.0
+        }else{
+            placeholderLabel.alpha = 0.0
+        }
+    }
+    
+    // 重写 观察者 处理block
+    override func observeValueForKeyPath(keyPath: String?, ofObject object: AnyObject?, change: [String : AnyObject]?, context: UnsafeMutablePointer<Void>){
+        print(context)
+        if((object?.isEqual(t2)) != nil){
+            print(1)
+        }
+        if(context == &mycontext){
+            print("Changed to:\(change![NSKeyValueChangeNewKey]!)")
+            let tempView = object
+            var topCorrect = ((tempView?.bounds.size.height)! - (tempView?.contentSize.height)! * (tempView?.zoomScale)!) / 2.0
+            topCorrect = ( topCorrect < 0.0 ? 0.0 : topCorrect )
+            tempView?.setContentOffset(CGPoint(x: 0, y: -topCorrect), animated: true)
+        }
+    }
+    
+    override func touchesBegan(touches: Set<UITouch>, withEvent event: UIEvent?) {
+        for touch: AnyObject in touches {
+            let t:UITouch = touch as! UITouch
+            //当在屏幕上连续拍动两下时，背景恢复为白色
+            if(t.tapCount == 2)
+            {
+                self.view.backgroundColor = UIColor.whiteColor()
+            }
+                //当在屏幕上单击时，屏幕变为红色
+            else if(t.tapCount == 1)
+            {
+                self.view.backgroundColor = UIColor.redColor()
+            }
+            print("event begin!")
+        }
+    }
+
+    override func didReceiveMemoryWarning() {
+        super.didReceiveMemoryWarning()
+        // Dispose of any resources that can be recreated.
+    }
+    
+    deinit {
+        NSNotificationCenter.defaultCenter().removeObserver(self);
+        t2.removeObserver(self,forKeyPath:"contentSize")
+    }
+    
+    func onMail(){
+        print("mail")
+    }
+    
+    func onWeiXin(){
+        print("weixin")
+    }
+    
+    func onUITextViewTextDidBeginEditing(sender:AnyObject){
+        print("began")
+    }
+
+    func onUITextViewTextDidChange(sender:AnyObject){
+        print("change")
+    }
+
+    func onUITextViewTextDidEndEditing(sender:AnyObject){
+        print("end")
+    }
+
+}
+```
+
+UITextView 不支持 placeholder , 可以借助label实现, 类似在IE实现一样
+
+## UITextField
+
+文本输入框（UITextField）是一个带一个事件按钮的可编辑文本输入框.可以用于像搜索, 聊天等场景.
+
+与UITextView的不同:
+
+```
+属性不同:
+placeholder, 直接提供placeholder功能
+borderStyle, 边框样式属性
+adjustsFontSizeToFitWidth, 是否缩放字体适应宽度
+minimumFontSize: CGFloat , 最小缩放比例
+contentVerticalAlignment, 垂直对齐方式
+background: UIImage? , 背景图片设置,先要去除边框样式
+clearButtonMode: UITextFieldViewMode , 清除按钮的模式
+keyboardType: UIKeyboardType , 键盘的类型
+returnKeyType: UIReturnKeyType , 返回按钮的类型
+```
+
+简单用法:
+
+```
+        let textField = UITextField()
+        textField.frame = CGRectMake(50.0, 350.0, 200.0, 50.0)
+        // 设置文本框的类型
+        // UITextBorderStyle.None - 无边框
+        // UITextBorderStyle.Line - 直线边框
+        // UITextBorderStyle.RoundedRect - 圆角矩形边框
+        // UITextBorderStyle.Bezel - 边线+阴影
+        textField.borderStyle = UITextBorderStyle.RoundedRect
+        // 设置placeholder
+        textField.placeholder = "请输入用户名"
+        //当文字超出文本框宽度时，自动调整文字大小
+        textField.adjustsFontSizeToFitWidth = true
+        //最小可缩小的字号
+        textField.minimumFontSize = 14
+        /** 水平对齐 **/
+        textField.textAlignment = .Right //水平右对齐
+        textField.textAlignment = .Center //水平居中对齐
+        textField.textAlignment = .Left //水平左对齐
+        /** 垂直对齐 **/
+        textField.contentVerticalAlignment = .Top  //垂直向上对齐
+        textField.contentVerticalAlignment = .Center  //垂直居中对齐
+        textField.contentVerticalAlignment = .Bottom  //垂直向下对齐
+        // 背景图片设置,先要去除边框样式
+        // textField.borderStyle = .None
+        // textField.background=UIImage(named:"background1")
+        // 设置清除按钮的模式
+        textField.clearButtonMode=UITextFieldViewMode.WhileEditing  //编辑时出现清除按钮
+        textField.clearButtonMode=UITextFieldViewMode.UnlessEditing  //编辑时不出现，编辑后才出现清除按钮
+        textField.clearButtonMode=UITextFieldViewMode.Always  //一直显示清除按钮
+        // 设置文本框关联的键盘类型
+        // Default - 系统默认的虚拟键盘
+        // ASCII Capable - 显示英文字母的虚拟键盘
+        // Numbers and Punctuation - 显示数字和标点的虚拟键盘
+        // URL - 显示便于输入数字的虚拟键盘
+        // Number Pad - 显示便于输入数字的虚拟键盘
+        // Phone Pad - 显示便于拨号呼叫的虚拟键盘
+        // Name Phone Pad - 显示便于聊天拨号的虚拟键盘
+        // Email Address - 显示便于输入Email的虚拟键盘
+        // Decimal Pad - 显示用于输入数字和小数点的虚拟键盘
+        // Twitter - 显示方便些Twitter的虚拟键盘
+        // Web Search - 显示便于在网页上书写的虚拟键盘
+        textField.keyboardType = UIKeyboardType.NumberPad
+        // 设置键盘return键的样式
+        textField.returnKeyType = UIReturnKeyType.Done //表示完成输入
+        textField.returnKeyType = UIReturnKeyType.Go //表示完成输入，同时会跳到另一页
+        textField.returnKeyType = UIReturnKeyType.Search //表示搜索
+        textField.returnKeyType = UIReturnKeyType.Join //表示注册用户或添加数据
+        textField.returnKeyType = UIReturnKeyType.Next //表示继续下一步
+        textField.returnKeyType = UIReturnKeyType.Send //表示发送
+        // 键盘return键的响应 , 需要实现 UITextFieldDelegate
+        self.view.addSubview(textField)
+```
+
+## UITableView
+
+继承 UIScrollView , 并且只允许垂直方向的滚动
+
+用来展示列表信息, 每个列表项是 UITableViewCell, 每个都独占一行, 并且有右边附带视图, 可以进入编辑模式, 让用户可以插入,删除,重新排列.
+
+有两种样式 `UITableViewStylePlain` 和 `UITableViewStyleGrouped` ,在创建是一个UITableView实例的时候必须要声明其中一种.声明之后不允许修改.
+
+UITableViewStylePlain 模式, 可以设置右边快速导航侧边栏(例如A-Z).头部和底部是在内容的上方.
+
+UITableViewStyleGrouped 模式, 会设置一个UITableViewCell的默认背景颜色和字体颜色.可以局部设置背景. 这个模式不能建立索引.
+
+只有在实例化的或者重新分配数据源的时候会默认执行reloadData方法.这个方法会清除视图当前的状态,包括选中的内容.如果显示的调用reloadData, 对layoutSubviews的直接或者间接调用都不会触发重新加载.
+
+UITableView 有两个delegate , `dataSource` 和 `delegate`
+
+dataSource是UITableViewDataSource类型，主要为UITableView提供显示用的数据(UITableViewCell)，指定UITableViewCell支持的编辑操作类型(insert，delete和reordering)，并根据用户的操作进行相应的数据更新操作，如果数据没有更具操作进行正确的更新，可能会导致显示异常，甚至crush。
+
+delegate是UITableViewDelegate类型，主要提供一些可选的方法，用来控制tableView的选择、指定section的头和尾的显示以及协助完成cell的删除和排序等功能。
+
+UITableView声明了一个NSIndexPath的类别，主要用来标识当前cell的在tableView中的位置，该类别有section和row两个属性，前者标识当前cell处于第几个section中，后者代表在该section中的第几行。
+
+UITableView只能有一列数据(cell)，且只支持纵向滑动，当创建好的tablView第一次显示的时候，我们需要调用其reloadData方法，强制刷新一次，从而使tableView的数据更新到最新状态。
+
+## UITableViewController
+
+UITableViewController是系统提供的一个便利类，主要是为了方便我们使用UITableView，该类生成的时候就将自身设置成了其包含的tableView的dataSource和delegate，并创建了很多代理函数的框架，为我们大大的节省了时间，我们可以通过其tableView属性获取该controller内部维护的tableView对象。默认情况下使用UITableViewController创建的tableView是充满全屏的，如果需要用到tableView是不充满全屏的话，我们应该使用UIViewController自己创建和维护tableView。
+
+　　UITableViewController提供一个初始化函数initWithStyle:，根据需要我们可以创建Plain或者Grouped类型的tableView，当我们使用其从UIViewController继承来的init初始化函数的时候，默认将会我们创建一个Plain类型的tableView。 
+
+　　UITableViewController默认的会在viewWillAppear的时候，清空所有选中cell，我们可以通过设置self.clearsSelectionOnViewWillAppear = NO，来禁用该功能，并在viewDidAppear中调用UIScrollView的flashScrollIndicators方法让滚动条闪动一次，从而提示用户该控件是可以滑动的。 
+
+## UITableViewCell
+
+UITableView中显示的每一个单元都是一个UITableViewCell对象，看文档的话我们会发现其初始化函数initWithStyle:reuseIdentifier:比较特别，跟我们平时看到的UIView的初始化函数不同。这个主要是为了效率考虑，因为在tableView快速滑动的滑动的过程中，频繁的alloc对象是比较费时的，于是引入了cell的重用机制，这个也是我们在dataSource中要重点注意的地方，用好重用机制会让我们的tableView滑动起来更加流畅。
+
+我们可以通过cell的selectionStyle属性指定cell选中时的显示风格，以及通过accessoryType来指定cell右边的显示的内容，或者直接指定accessoryView来定制右边显示的view。 
+
+系统提供的UITableView也包含了四种风格的布局，分别是:
+
+```
+UITableViewCellStyle:
+Default - 黑色左对齐的文本,可选的图片
+Value1 - 左边是黑色左对齐的文本, 右边是蓝色右对齐小字号文本(设置列表)
+Value2 - 左边是蓝色右对齐的文本, 右边是黑色左对齐小字号文本(联系人列表)
+Subtitle - 带有子标题的
+```
+
+自定义cell:
+
+```
+1、直接向cell的contentView上面添加subView
+这是比较简单的一种的，根据布局需要我们可以在不同的位置添加subView。但是此处需要注意：所有添加的subView都最好设置为不透明的，因为如果subView是半透明的话，view图层的叠加将会花费一定的时间，这会严重影响到效率。同时如果每个cell上面添加的subView个数过多的话(通常超过3，4个)，效率也会受到比较大的影响。
+
+2、从UITableViewCell派生一个类
+通过从UITableViewCell中派生一个类，可以更深度的定制一个cell，可以指定cell在进入edit模式的时候如何相应等等。最简单的实现方式就是将所有要绘制的内容放到一个定制的subView中，并且重载该subView的drawRect方法直接把要显示的内容绘制出来(这样可以避免subView过多导致的性能瓶颈)，最后再将该subView添加到cell派生类中的contentView中即可。但是这样定制的cell需要注意在数据改变的时候，通过手动调用该subView的setNeedDisplay方法来刷新界面
+```
+
+为了使UITableVeiew进入edit模式以后，如果该cell支持reordering的话，reordering控件就会临时的把accessaryView覆盖掉。为了显示reordering控件，我们必须将cell的showsReorderControl属性设置成YES，同时实现dataSource中的tableView:moveRowAtIndexPath:toIndexPath:方法。我们还可以同时通过实现dataSource中的 tableView:canMoveRowAtIndexPath:返回NO，来禁用某一些cell的reordering功能。
+
+```
+当我们在tableView中点击一个cell的时候，将会调用tableView的delegate中的tableView:didSelectRowAtIndexPath:方法。
+
+　　关于tableView的cell的选中，苹果官方有以下几个建议：
+
+ 　　1、不要使用selection来表明cell的选择状态，而应该使用accessaryView中的checkMark或者自定义accessaryView来显示选中状态。 
+
+ 　　2、当选中一个cell的时候，你应该取消前一个cell的选中。 
+
+ 　　3、如果cell选中的时候，进入下一级viewCOntroller，你应该在该级菜单从navigationStack上弹出的时候，取消该cell的选中。
+
+　　这块儿再提一点，当一个cell的accessaryType为UITableViewCellAccessoryDisclosureIndicator的时候，点击该accessary区域通常会将消息继续向下传递，即跟点击cell的其他区域一样，将会掉delegate的tableView:didSelectRowAtIndexPath:方法，当时如果accessaryView为 UITableViewCellAccessoryDetailDisclosureButton的时候，点击accessaryView将会调用delegate的 tableView:accessoryButtonTappedForRowWithIndexPath:方法。
+```
+
+# UIButton
 
 继承 UIControl , 用于实现拦截用户点击屏幕按钮的事件.
 
@@ -467,6 +851,10 @@ override func viewDidLoad() {
 
 有些复杂控件，可以有多个tint color，不同的tint color控件不同的部分。如上面提到的UIProgressView，又如navigation bars, tab bars, toolbars, search bars, scope bars等，这些控件的背景着色颜色可以使用barTintColor属性来处理。
 
+## familyNames
 
+```
+["Copperplate", "Heiti SC", "Iowan Old Style", "Kohinoor Telugu", "Thonburi", "Heiti TC", "Courier New", "Gill Sans", "Apple SD Gothic Neo", "Marker Felt", "Avenir Next Condensed", "Tamil Sangam MN", "Helvetica Neue", "Gurmukhi MN", "Times New Roman", "Georgia", "Apple Color Emoji", "Arial Rounded MT Bold", "Kailasa", "Kohinoor Devanagari", "Kohinoor Bangla", "Chalkboard SE", "Sinhala Sangam MN", "PingFang TC", "Gujarati Sangam MN", "Damascus", "Noteworthy", "Geeza Pro", "Avenir", "Academy Engraved LET", "Mishafi", "Futura", "Farah", "Kannada Sangam MN", "Arial Hebrew", "Arial", "Party LET", "Chalkduster", "Hoefler Text", "Optima", "Palatino", "Lao Sangam MN", "Malayalam Sangam MN", "Al Nile", "Bradley Hand", "PingFang HK", "Trebuchet MS", "Helvetica", "Courier", "Cochin", "Hiragino Mincho ProN", "Devanagari Sangam MN", "Oriya Sangam MN", "Snell Roundhand", "Zapf Dingbats", "Bodoni 72", "Verdana", "American Typewriter", "Avenir Next", "Baskerville", "Khmer Sangam MN", "Didot", "Savoye LET", "Bodoni Ornaments", "Symbol", "Menlo", "Bodoni 72 Smallcaps", "Papyrus", "Hiragino Sans", "PingFang SC", "Euphemia UCAS", "Telugu Sangam MN", "Bangla Sangam MN", "Zapfino", "Bodoni 72 Oldstyle"]
+```
 
 
