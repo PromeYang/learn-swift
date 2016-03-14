@@ -416,22 +416,23 @@ UITextViewTextDidEndEditingNotification
 简单用法:
 
 ```
-class ViewController: UIViewController, UITextViewDelegate {
+class ViewController: UIViewController, UITextViewDelegate{
     
     private var mycontext = 0
     let t2 = UITextView()
     let placeholderLabel = UILabel()
+    let textField = UITextField()
     
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
         let text = UITextView(frame: CGRectMake(50.0, 20.0, 200.0, 200.0), textContainer: nil)
-        text.text = "这是一\n个UITextView, 后面020-12345678还有很多很多很多很多很多很多很多很多很多很多很多很多很多很多很多很多很多很多"
+        text.text = "http://a.b.c,这是一\n个UITextView, 后面 +8602980000000 还有很多很多很多很多很多很多很多很多很多很多很多很多很多很多很多很多很多很多"
         text.textColor = UIColor.whiteColor()
         text.textAlignment = NSTextAlignment.Center
         text.font = UIFont(name:"Heiti TC", size:20)
         text.frame = CGRectMake(50.0, 20.0, 200.0, 200.0)
-        text.backgroundColor = UIColor.blueColor()
+        text.backgroundColor = UIColor.grayColor()
         // 设置输入的时候是否清楚之前的内容
         text.clearsOnInsertion = true
         // 设置是否允许选择
@@ -447,6 +448,7 @@ class ViewController: UIViewController, UITextViewDelegate {
         
         // 设置链接的处理方式
         // 需要设置不允许编辑
+        text.editable = false
         text.dataDetectorTypes = UIDataDetectorTypes.None //都不加链接
         text.dataDetectorTypes = UIDataDetectorTypes.PhoneNumber //只有电话加链接
         text.dataDetectorTypes = UIDataDetectorTypes.Link //只有网址加链接
@@ -491,12 +493,115 @@ class ViewController: UIViewController, UITextViewDelegate {
         self.view.addSubview(text);
         self.view.addSubview(t2);
         self.view.addSubview(placeholderLabel);
+        
+        // let textField = UITextField()
+        textField.frame = CGRectMake(50.0, 350.0, 200.0, 50.0)
+        // 设置文本框的类型
+        // UITextBorderStyle.None - 无边框
+        // UITextBorderStyle.Line - 直线边框
+        // UITextBorderStyle.RoundedRect - 圆角矩形边框
+        // UITextBorderStyle.Bezel - 边线+阴影
+        textField.borderStyle = UITextBorderStyle.RoundedRect
+        // 设置placeholder
+        textField.placeholder = "请输入用户名"
+        //当文字超出文本框宽度时，自动调整文字大小
+        textField.adjustsFontSizeToFitWidth = true
+        //最小可缩小的字号
+        textField.minimumFontSize = 14
+        /** 水平对齐 **/
+        textField.textAlignment = .Right //水平右对齐
+        textField.textAlignment = .Center //水平居中对齐
+        textField.textAlignment = .Left //水平左对齐
+        /** 垂直对齐 **/
+        textField.contentVerticalAlignment = .Top  //垂直向上对齐
+        textField.contentVerticalAlignment = .Center  //垂直居中对齐
+        textField.contentVerticalAlignment = .Bottom  //垂直向下对齐
+        // 背景图片设置,先要去除边框样式
+        // textField.borderStyle = .None
+        // textField.background=UIImage(named:"background1")
+        // 设置清除按钮的模式
+        textField.clearButtonMode=UITextFieldViewMode.WhileEditing  //编辑时出现清除按钮
+        textField.clearButtonMode=UITextFieldViewMode.UnlessEditing  //编辑时不出现，编辑后才出现清除按钮
+        textField.clearButtonMode=UITextFieldViewMode.Always  //一直显示清除按钮
+        // 设置文本框关联的键盘类型
+        // Default - 系统默认的虚拟键盘
+        // ASCII Capable - 显示英文字母的虚拟键盘
+        // Numbers and Punctuation - 显示数字和标点的虚拟键盘
+        // URL - 显示便于输入数字的虚拟键盘
+        // Number Pad - 显示便于输入数字的虚拟键盘
+        // Phone Pad - 显示便于拨号呼叫的虚拟键盘
+        // Name Phone Pad - 显示便于聊天拨号的虚拟键盘
+        // Email Address - 显示便于输入Email的虚拟键盘
+        // Decimal Pad - 显示用于输入数字和小数点的虚拟键盘
+        // Twitter - 显示方便些Twitter的虚拟键盘
+        // Web Search - 显示便于在网页上书写的虚拟键盘
+        textField.keyboardType = UIKeyboardType.NumberPad
+        // 设置键盘return键的样式
+        textField.returnKeyType = UIReturnKeyType.Done //表示完成输入
+        textField.returnKeyType = UIReturnKeyType.Go //表示完成输入，同时会跳到另一页
+        textField.returnKeyType = UIReturnKeyType.Search //表示搜索
+        textField.returnKeyType = UIReturnKeyType.Join //表示注册用户或添加数据
+        textField.returnKeyType = UIReturnKeyType.Next //表示继续下一步
+        textField.returnKeyType = UIReturnKeyType.Send //表示发送
+        // 键盘return键的响应 , 需要实现 UITextFieldDelegate
+        self.view.addSubview(textField)
+        
+        let button = UIButton(frame:CGRectMake(10, 450, 100, 30))
+        button.setTitle("普通状态", forState:UIControlState.Normal) //普通状态下的文字
+        button.setTitle("触摸状态", forState:UIControlState.Highlighted) //触摸状态下的文字
+        button.setTitle("禁用状态", forState:UIControlState.Disabled) //禁用状态下的文字
+        
+        button.setTitleColor(UIColor.whiteColor(),forState: .Normal) //普通状态下文字的颜色
+        button.setTitleColor(UIColor.greenColor(),forState: .Highlighted) //触摸状态下文字的颜色
+        button.setTitleColor(UIColor.grayColor(),forState: .Disabled) //禁用状态下文字的颜色
+        
+        button.setTitleShadowColor(UIColor.greenColor(),forState:.Normal) //普通状态下文字阴影的颜色
+        button.setTitleShadowColor(UIColor.yellowColor(),forState:.Highlighted) //普通状态下文字阴影的颜色
+        button.setTitleShadowColor(UIColor.grayColor(),forState:.Disabled) //普通状态下文字阴影的颜色
+        
+        button.backgroundColor=UIColor.blackColor()
+        
+        button.addTarget(self,action:Selector("tapped"),forControlEvents:.TouchUpInside)
+        self.view.addSubview(button)
+        
+        // 监听键盘改变通知
+        NSNotificationCenter.defaultCenter().addObserver(self,
+            selector: "keyboardWillChange:",
+            name: UIKeyboardWillChangeFrameNotification, object: nil)
 
+    }
+    
+    func tapped(){
+        print("tapped")
+        var sb = UIStoryboard(name: "Main", bundle: nil)
+        let anotherView = sb.instantiateViewControllerWithIdentifier("tableViewController") as! tableViewController
+        self.presentViewController(anotherView, animated: true, completion: nil)
     }
     
     override func viewDidLayoutSubviews(){
         if(t2.text.characters.count <= 0){
             placeholderLabel.alpha = 1.0
+        }
+    }
+    
+    // 键盘改变
+    func keyboardWillChange(notification: NSNotification) {
+        if let userInfo = notification.userInfo,
+            value = userInfo[UIKeyboardFrameEndUserInfoKey] as? NSValue,
+            duration = userInfo[UIKeyboardAnimationDurationUserInfoKey] as? Double,
+            curve = userInfo[UIKeyboardAnimationCurveUserInfoKey] as? UInt {
+                let frame = value.CGRectValue()
+                print(frame)
+                let intersection = CGRectIntersection(frame, self.view.frame)
+                print(intersection)
+                textField.frame = CGRectMake(50.0, frame.origin.y - 50.0, 200.0, 50.0)
+                //self.view.setNeedsLayout()
+                //改变下约束
+//                self.bottomConstraint.constant = CGRectGetHeight(intersection)
+                UIView.animateWithDuration(duration, delay: 0.0,options: UIViewAnimationOptions(rawValue: curve), animations: {
+                    _ in
+                    self.view.layoutIfNeeded()
+                }, completion: nil)
         }
     }
     
@@ -530,15 +635,16 @@ class ViewController: UIViewController, UITextViewDelegate {
     override func touchesBegan(touches: Set<UITouch>, withEvent event: UIEvent?) {
         for touch: AnyObject in touches {
             let t:UITouch = touch as! UITouch
-            //当在屏幕上连续拍动两下时，背景恢复为白色
+            // 当在屏幕上连续拍动两下时，背景恢复为白色
             if(t.tapCount == 2)
             {
                 self.view.backgroundColor = UIColor.whiteColor()
             }
-                //当在屏幕上单击时，屏幕变为红色
+            // 当在屏幕上单击时，屏幕变为红色, 在屏幕点击的时候,收起输入法键盘
             else if(t.tapCount == 1)
             {
                 self.view.backgroundColor = UIColor.redColor()
+                textField.resignFirstResponder()
             }
             print("event begin!")
         }
@@ -682,9 +788,22 @@ UITableView只能有一列数据(cell)，且只支持纵向滑动，当创建好
 
 UITableViewController是系统提供的一个便利类，主要是为了方便我们使用UITableView，该类生成的时候就将自身设置成了其包含的tableView的dataSource和delegate，并创建了很多代理函数的框架，为我们大大的节省了时间，我们可以通过其tableView属性获取该controller内部维护的tableView对象。默认情况下使用UITableViewController创建的tableView是充满全屏的，如果需要用到tableView是不充满全屏的话，我们应该使用UIViewController自己创建和维护tableView。
 
-　　UITableViewController提供一个初始化函数initWithStyle:，根据需要我们可以创建Plain或者Grouped类型的tableView，当我们使用其从UIViewController继承来的init初始化函数的时候，默认将会我们创建一个Plain类型的tableView。 
+UITableViewController提供一个初始化函数initWithStyle:，根据需要我们可以创建Plain或者Grouped类型的tableView，当我们使用其从UIViewController继承来的init初始化函数的时候，默认将会我们创建一个Plain类型的tableView。 
 
-　　UITableViewController默认的会在viewWillAppear的时候，清空所有选中cell，我们可以通过设置self.clearsSelectionOnViewWillAppear = NO，来禁用该功能，并在viewDidAppear中调用UIScrollView的flashScrollIndicators方法让滚动条闪动一次，从而提示用户该控件是可以滑动的。 
+UITableViewController默认的会在viewWillAppear的时候，清空所有选中cell，我们可以通过设置self.clearsSelectionOnViewWillAppear = NO，来禁用该功能，并在viewDidAppear中调用UIScrollView的flashScrollIndicators方法让滚动条闪动一次，从而提示用户该控件是可以滑动的。
+　　
+创建cells
+
+```
+func registerNib(_ nib: UINib?, forCellReuseIdentifier identifier: String)
+func registerClass(_ cellClass: AnyClass?, forCellReuseIdentifier identifier: String)
+传入一个nib或者一个实现了cell的class, 来告诉table view应该怎样去创建一个cell, 并传入一个不为`nil`或者空字符串的值作为标识,添加到重用队列中.
+使用一个相同的标识的时候, 会覆盖旧的标识.
+设置第一个参数为`nil`来注销重用队列中的重用cell
+
+
+
+``` 
 
 ## UITableViewCell
 
