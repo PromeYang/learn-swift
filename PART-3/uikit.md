@@ -784,6 +784,148 @@ UITableView声明了一个NSIndexPath的类别，主要用来标识当前cell的
 
 UITableView只能有一列数据(cell)，且只支持纵向滑动，当创建好的tablView第一次显示的时候，我们需要调用其reloadData方法，强制刷新一次，从而使tableView的数据更新到最新状态。
 
+```
+class tableViewController: UIViewController, UITableViewDelegate, UITableViewDataSource {
+    
+    var ctrlnames:[String]?
+    var tableView:UITableView?
+    
+    override func loadView() {
+        super.loadView()
+    }
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+//        let arr = NSLayoutConstraint.constraintsWithVisualFormat("H:|-10-[A(60)]", options: nil, metrics: nil, views: ["A",A])
+        NSLayoutConstraint(item: <#T##AnyObject#>, attribute: <#T##NSLayoutAttribute#>, relatedBy: <#T##NSLayoutRelation#>, toItem: <#T##AnyObject?#>, attribute: <#T##NSLayoutAttribute#>, multiplier: <#T##CGFloat#>, constant: <#T##CGFloat#>)
+        self.view.addConstraint(<#T##constraint: NSLayoutConstraint##NSLayoutConstraint#>)
+        tableView?.translatesAutoresizingMaskIntoConstraints = false
+        //初始化数据
+        self.ctrlnames = ["武汉","上海","北京","深圳","广州","重庆","香港","台海","天津"]
+        
+        // 初始化 UITableView , 必须要指定style, 并且指定之后不可以修改
+        self.tableView = UITableView(frame: self.view.frame, style:UITableViewStyle.Plain)
+        // 绑定delegate
+        self.tableView!.delegate = self
+        self.tableView!.dataSource = self
+        // 创建一个重用的单元格
+        self.tableView!.registerClass(UITableViewCell.self, forCellReuseIdentifier: "SwiftCell")
+        // 设置每个cell的行高
+        self.tableView!.rowHeight = 50.0
+        
+        // 设置背景视图, 在所有元素的最底层, 作为tableView子视图存在, 如果要设置颜色, 必须设置为nil
+        self.tableView!.backgroundView = nil
+        self.tableView!.backgroundColor = UIColor.grayColor()
+        
+        // ios9解决cell 缩进问题, 判断是否需要根据内容留有空白
+        if #available(iOS 9, *) {
+            self.tableView!.cellLayoutMarginsFollowReadableWidth = false
+        }
+        
+        // 设置分隔线
+        // 设置分隔线的样式
+        self.tableView!.separatorStyle = UITableViewCellSeparatorStyle.None
+        self.tableView!.separatorStyle = UITableViewCellSeparatorStyle.SingleLineEtched //双线,只支持grouped
+        self.tableView!.separatorStyle = UITableViewCellSeparatorStyle.SingleLine // 默认值
+        // 设置分隔线的颜色
+        self.tableView!.separatorColor = UIColor.grayColor() // 默认gray
+        // 设置分隔线的边距, UIEdgeInsetsMake就跟内边距padding差不多 ,疑问: 怎样设置左边没有边距
+        tableView!.separatorInset = UIEdgeInsetsMake(0, 0, 0, 0) // 上左下右, 默认上下无效, 左边最小15,
+        
+        self.view.addSubview(self.tableView!)
+        
+        //创建表头标签
+        let headerLabel = UILabel(frame: CGRectMake(0, 200, self.view.bounds.size.width, 30))
+        headerLabel.backgroundColor = UIColor.blackColor()
+        headerLabel.textColor = UIColor.whiteColor()
+        headerLabel.numberOfLines = 0
+        headerLabel.lineBreakMode = NSLineBreakMode.ByWordWrapping
+        headerLabel.text = "我是UITableView的headerLabel"
+        headerLabel.font = UIFont.italicSystemFontOfSize(20)
+        self.tableView!.tableHeaderView = headerLabel
+        self.tableView!.tableFooterView = headerLabel
+        
+        
+        // 返回一个section中的行数, 也就是cell的数量, numberOfRowsInSection(_ section: Int) -> Int
+        print(tableView!.numberOfRowsInSection(0))
+        // 返回样式
+        print(tableView!.style)
+        // 返回section的数量
+        print(tableView!.numberOfSections)
+        // 返回每一行cell的高度
+        print(tableView!.rowHeight)
+        // 返回样式
+//        print(tableView!)
+    }
+    
+    //在本例中，只有一个分区, 设置多少就有多少
+    func numberOfSectionsInTableView(tableView: UITableView) -> Int {
+        return 1
+    }
+    
+    //返回表格行数（也就是返回控件数）
+    func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        return self.ctrlnames!.count
+    }
+    
+    //创建各单元显示内容(创建参数indexPath指定的单元）
+    func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath)
+        -> UITableViewCell
+    {
+        //为了提供表格显示性能，已创建完成的单元需重复使用
+        let identify:String = "SwiftCell"
+        //同一形式的单元格重复使用，在声明时已注册
+        let cell = tableView.dequeueReusableCellWithIdentifier(identify,
+            forIndexPath: indexPath) as UITableViewCell
+        cell.accessoryType = UITableViewCellAccessoryType.DisclosureIndicator
+        cell.textLabel?.text = self.ctrlnames![indexPath.row]
+        return cell
+    }
+    
+    // UITableViewDelegate 方法，处理列表项的选中事件
+    func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath)
+    {
+        self.tableView!.deselectRowAtIndexPath(indexPath, animated: true)
+        
+        let itemString = self.ctrlnames![indexPath.row]
+        let alertController = UIAlertController(title: "提示!",
+            message: "你选中了【\(itemString)】", preferredStyle: .Alert)
+        let okAction = UIAlertAction(title: "确定", style: .Default,handler: nil)
+        alertController.addAction(okAction)
+        self.presentViewController(alertController, animated: true, completion: nil)
+    }
+    
+    //滑动删除必须实现的方法
+    func tableView(tableView: UITableView,
+        commitEditingStyle editingStyle: UITableViewCellEditingStyle,
+        forRowAtIndexPath indexPath: NSIndexPath) {
+            print("删除\(indexPath.row)")
+            let index = indexPath.row
+            self.ctrlnames?.removeAtIndex(index)
+            self.tableView?.deleteRowsAtIndexPaths([indexPath],
+                withRowAnimation: UITableViewRowAnimation.Top)
+    }
+    
+    //滑动删除
+    func tableView(tableView: UITableView,
+        editingStyleForRowAtIndexPath indexPath: NSIndexPath)
+        -> UITableViewCellEditingStyle {
+            return UITableViewCellEditingStyle.Delete
+    }
+    
+    //修改删除按钮的文字
+    func tableView(tableView: UITableView,
+        titleForDeleteConfirmationButtonForRowAtIndexPath indexPath: NSIndexPath)
+        -> String? {
+            return "删"
+    }
+    
+    override func didReceiveMemoryWarning() {
+        super.didReceiveMemoryWarning()
+    }
+}
+```
+
 ## UITableViewController
 
 UITableViewController是系统提供的一个便利类，主要是为了方便我们使用UITableView，该类生成的时候就将自身设置成了其包含的tableView的dataSource和delegate，并创建了很多代理函数的框架，为我们大大的节省了时间，我们可以通过其tableView属性获取该controller内部维护的tableView对象。默认情况下使用UITableViewController创建的tableView是充满全屏的，如果需要用到tableView是不充满全屏的话，我们应该使用UIViewController自己创建和维护tableView。
